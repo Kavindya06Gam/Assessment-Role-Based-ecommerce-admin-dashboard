@@ -8,10 +8,12 @@ import {
   OrderItem,
   Setting,
 } from "../models/index.js";
+
+//  Import RBAC helper (ONLY from rbac.js)
 import { isAdmin } from "./rbac.js";
 
 // =======================
-// USER RESOURCE (ADMIN ONLY)
+//  USER RESOURCE (ADMIN ONLY)
 // =======================
 export const userResource = {
   resource: User,
@@ -24,13 +26,13 @@ export const userResource = {
       delete: { isAccessible: isAdmin },
     },
     properties: {
-      password: { isVisible: false }, // hide password everywhere
+      password: { isVisible: false }, //  hide password everywhere
     },
   },
 };
 
 // =======================
-// PRODUCT RESOURCE
+//  PRODUCT RESOURCE
 // Admin = full access
 // User = read only
 // =======================
@@ -38,8 +40,8 @@ export const productResource = {
   resource: Product,
   options: {
     actions: {
-      list: { isAccessible: () => true }, // everyone can view
-      show: { isAccessible: () => true }, // everyone can view
+      list: { isAccessible: () => true }, // everyone
+      show: { isAccessible: () => true }, // everyone
       new: { isAccessible: isAdmin }, // admin only
       edit: { isAccessible: isAdmin }, // admin only
       delete: { isAccessible: isAdmin }, // admin only
@@ -48,7 +50,7 @@ export const productResource = {
 };
 
 // =======================
-// CATEGORY RESOURCE
+//  CATEGORY RESOURCE
 // =======================
 export const categoryResource = {
   resource: Category,
@@ -64,7 +66,7 @@ export const categoryResource = {
 };
 
 // =======================
-// ORDER RESOURCE
+//  ORDER RESOURCE
 // =======================
 export const orderResource = {
   resource: Order,
@@ -80,7 +82,7 @@ export const orderResource = {
 };
 
 // =======================
-// ORDER ITEM RESOURCE
+//  ORDER ITEM RESOURCE (ADMIN ONLY)
 // =======================
 export const orderItemResource = {
   resource: OrderItem,
@@ -109,8 +111,4 @@ export const settingResource = {
       delete: { isAccessible: isAdmin },
     },
   },
-};
-
-export const isAdmin = (context) => {
-  return context?.currentAdmin?.role === "admin";
 };

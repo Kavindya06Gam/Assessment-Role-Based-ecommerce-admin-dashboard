@@ -1,14 +1,17 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../../config/database.js';
 
-const Category = sequelize.define('Category', {
+const Product = sequelize.define('Product', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
 
   name: { type: DataTypes.STRING, allowNull: false },
   slug: { type: DataTypes.STRING, unique: true },
 
-  description: { type: DataTypes.TEXT },
-  isActive: { type: DataTypes.BOOLEAN, defaultValue: true }
+  price: { type: DataTypes.FLOAT, allowNull: false },
+  stock: { type: DataTypes.INTEGER, defaultValue: 0 },
+
+  sku: { type: DataTypes.STRING, unique: true },
+  imageUrl: { type: DataTypes.STRING }
 });
 
-export default Category;
+export default Product;
