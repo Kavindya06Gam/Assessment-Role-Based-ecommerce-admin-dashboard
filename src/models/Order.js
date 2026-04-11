@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  return sequelize.define('Order', {
+  return sequelize.define("Order", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -17,7 +17,7 @@ export default (sequelize, DataTypes) => {
         "paid",
         "shipped",
         "completed",
-        "cancelled"
+        "cancelled",
       ),
       defaultValue: "pending",
     },

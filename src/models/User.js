@@ -10,21 +10,13 @@ export default (sequelize, DataTypes) => {
         primaryKey: true,
       },
 
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-
+      name: DataTypes.STRING,
       email: {
         type: DataTypes.STRING,
-        allowNull: false,
         unique: true,
       },
 
-      password: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+      password: DataTypes.STRING,
 
       role: {
         type: DataTypes.ENUM("admin", "user"),
@@ -40,9 +32,6 @@ export default (sequelize, DataTypes) => {
       address: DataTypes.STRING,
     },
     {
-      tableName: "users",
-      timestamps: true,
-
       hooks: {
         beforeCreate: async (user) => {
           user.password = await bcrypt.hash(user.password, 12);
@@ -56,7 +45,6 @@ export default (sequelize, DataTypes) => {
     },
   );
 
-  // instance method
   User.prototype.validatePassword = async function (plain) {
     return bcrypt.compare(plain, this.password);
   };

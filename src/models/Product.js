@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) => {
-  return sequelize.define('Product', {
+  return sequelize.define("Product", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
