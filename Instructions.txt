@@ -1,0 +1,202 @@
+# Ecommerce Admin Dashboard – Setup Guide
+
+> Complete guide to clone, configure, and run the project using Docker + Node.js + PostgreSQL.
+
+---
+
+##  Prerequisites
+
+Before starting, make sure you have the following installed:
+
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [npm](https://www.npmjs.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/)
+
+---
+
+## Step 1 — Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/ecommerce-admin-dashboard.git
+cd ecommerce-admin-dashboard
+```
+
+---
+
+## Step 2 — Install Dependencies
+
+Install all required Node.js packages:
+
+```bash
+npm install
+```
+
+>Ignore deprecated warnings — they do not break the project.
+
+---
+
+## Step 3 — Start PostgreSQL Using Docker 
+
+Run a new PostgreSQL container:
+
+```bash
+docker run --name ecommerce-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=ecommerce_admin \
+  -p 5434:5432 \
+  -d postgres
+```
+
+### Docker Container Details
+
+| Property       | Value             |
+|----------------|-------------------|
+| Container Name | `ecommerce-db`    |
+| Database Name  | `ecommerce_admin` |
+| Username       | `postgres`        |
+| Password       | `postgres`        |
+| Port Mapping   | `5434 → 5432`     |
+
+---
+
+## Step 4 — Configure Environment Variables 
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and update it with the following values:
+
+```env
+DB_HOST=localhost
+DB_PORT=5434
+DB_NAME=ecommerce_admin
+DB_USER=postgres
+DB_PASSWORD=postgres
+
+SESSION_SECRET=your_long_session_secret
+COOKIE_PASSWORD=your_long_cookie_password
+JWT_SECRET=your_long_jwt_secret
+
+PORT=3000
+NODE_ENV=development
+```
+
+---
+
+## Step 5 — Seed the Database 
+
+This step creates default users, products, and all required data:
+
+```bash
+npm run seed
+```
+
+###  Expected Output
+
+- Tables created
+- Admin user inserted
+- Seed completed successfully
+
+---
+
+## Step 6 — Start the Development Server 
+
+```bash
+npm run dev
+```
+
+---
+
+## Step 7 — Access the Application 
+
+Open your browser and navigate to:
+
+```
+http://localhost:3000/admin
+```
+
+---
+
+## Step 8 — Login Credentials 
+
+After seeding, use the following admin credentials:
+
+```
+Email:    admin@example.com
+Password: (check your seed file)
+```
+
+---
+
+##  Project Architecture Overview
+
+| Layer          | Technology                  |
+|----------------|-----------------------------|
+| Backend Server | Express.js                  |
+| ORM            | Sequelize                   |
+| Admin UI       | AdminJS                     |
+| Database       | PostgreSQL (via Docker)      |
+| Session Store  | Sequelize-based sessions     |
+
+---
+
+## Common Issues & Fixes
+
+###  Port 5432 Already in Use
+
+Use an alternate host port mapping in your Docker command:
+
+```bash
+-p 5434:5432
+```
+
+And make sure your `.env` reflects this:
+
+```env
+DB_PORT=5434
+```
+
+---
+
+###  Authentication Failed
+
+Double-check these values in your `.env` file:
+
+```env
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_PORT=5434
+```
+
+---
+
+### Seed Fails
+
+Ensure the following before re-running:
+
+1. Docker container is running (`docker ps`)
+2. The `ecommerce_admin` database exists
+3. Your `.env` values are correct
+
+Then re-run:
+
+```bash
+npm run seed
+```
+
+---
+
+##  Final Checklist
+
+- [ ] Repository cloned
+- [ ] Dependencies installed (`npm install`)
+- [ ] Docker PostgreSQL container running
+- [ ] `.env` file configured
+- [ ] Database seeded (`npm run seed`)
+- [ ] Development server running (`npm run dev`)
+- [ ] Admin panel accessible at `http://localhost:3000/admin`
