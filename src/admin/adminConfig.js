@@ -1,8 +1,12 @@
-import AdminJS from "adminjs";
-import AdminJSSequelize from "@adminjs/sequelize";
-// Import Models for the Dashboard logic
+import AdminJS, { ComponentLoader } from "adminjs";
+import * as AdminJSSequelize from "@adminjs/sequelize";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Models
 import { User, Product, Order } from "../models/index.js";
-// Import Resource configurations
+
+// Resources
 import {
   userResource,
   productResource,
@@ -12,13 +16,30 @@ import {
   settingResource,
 } from "./resources.js";
 
-// Register the adapter so AdminJS understands Sequelize models
-AdminJS.registerAdapter(AdminJSSequelize);
+// --- Fix for Windows File Paths ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// IMPORTANT: register adapter
+AdminJS.registerAdapter({
+  Resource: AdminJSSequelize.Resource,
+  Database: AdminJSSequelize.Database,
+});
+
+const componentLoader = new ComponentLoader();
+
+const Components = {
+  // Use path.join with __dirname to ensure the path is absolute and valid on Windows
+  Dashboard: componentLoader.add(
+    "Dashboard",
+    path.join(__dirname, "./components/Dashboard.jsx"),
+  ),
+};
 
 const adminJs = new AdminJS({
   rootPath: "/admin",
+  componentLoader,
 
-  // Resources Configuration
   resources: [
     userResource,
     productResource,
@@ -28,7 +49,6 @@ const adminJs = new AdminJS({
     settingResource,
   ],
 
-  // Updated Branding
   branding: {
     companyName: "eCommerce Admin",
     withMadeWithLove: false,
@@ -40,42 +60,37 @@ const adminJs = new AdminJS({
     },
   },
 
-  // Dashboard Handler & Component
   dashboard: {
+    component: Components.Dashboard,
     handler: async (req, res, context) => {
       const { currentAdmin } = context;
 
-      // Logic for Admin role
       if (currentAdmin?.role === "admin") {
         const [totalUsers, totalProducts, totalOrders] = await Promise.all([
-          User.count(),
-          Product.count(),
-          Order.count(),
+          User.count().catch(() => 0),
+          Product.count().catch(() => 0),
+          Order.count().catch(() => 0),
         ]);
+
         return { totalUsers, totalProducts, totalOrders };
       }
 
-      // Logic for regular users/customers
       const myOrders = await Order.findAll({
-        where: { UserId: currentAdmin.id },
-      });
+        where: { UserId: currentAdmin?.id || 0 },
+      }).catch(() => []);
+
       const mySpent = myOrders.reduce(
-        (s, o) => s + parseFloat(o.totalAmount || 0),
+        (sum, o) => sum + Number(o.totalAmount || 0),
         0,
       );
 
       return {
         myOrders: myOrders.length,
-        mySpent: mySpent.toFixed(2),
+        mySpent,
       };
     },
-    component: AdminJS.bundle("./components/Dashboard.jsx"),
-  },
-
-  // Required for RBAC (Role-Based Access Control)
-  currentAdmin: async (request) => {
-    return request.session?.adminUser || null;
   },
 });
 
+export { adminJs, componentLoader };
 export default adminJs;

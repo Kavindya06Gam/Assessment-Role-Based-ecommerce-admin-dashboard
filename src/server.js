@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import session from "express-session";
 import AdminJSExpress from "@adminjs/express";
-import bcrypt from "bcryptjs"; // Ensure consistency with your seeder
+import bcrypt from "bcryptjs"; 
 import adminJs from "./admin/adminConfig.js";
 import { sequelize, User } from "./models/index.js";
 
@@ -14,6 +14,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "supersecret",
     resave: false,
     saveUninitialized: true,
+    cookie: { httpOnly: true, secure: false } // secure: true in production with HTTPS
   }),
 );
 
@@ -39,7 +40,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       return null;
     },
     cookieName: "adminjs_session",
-    cookiePassword: process.env.COOKIE_PASSWORD || "complexpassword123",
+    cookiePassword: process.env.COOKIE_PASSWORD || "complexpassword1234567890123456", // must be long
   },
   null,
   { resave: false, saveUninitialized: true },
@@ -52,9 +53,8 @@ app.get("/", (req, res) => res.redirect("/admin"));
 const start = async () => {
   try {
     await sequelize.authenticate();
-    // Use alter: true only in development to sync changes
     await sequelize.sync({ alter: true });
-    app.listen(3000, () => console.log(" Server: http://localhost:3000/admin"));
+    app.listen(3000, () => console.log("🚀 Server: http://localhost:3000/admin"));
   } catch (error) {
     console.error("Database connection failed:", error);
   }
