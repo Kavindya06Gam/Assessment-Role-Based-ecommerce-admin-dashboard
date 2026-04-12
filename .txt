@@ -1,0 +1,12 @@
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ecommerce_admin
+DB_USER=postgres
+DB_PASSWORD=your_password
+
+JWT_SECRET=your_super_secret_jwt_key_min_32_chars
+SESSION_SECRET=your_session_secret_min_32_chars
+COOKIE_PASSWORD=your_cookie_password_at_least_32_chars!!
+
+PORT=3000
+NODE_ENV=development

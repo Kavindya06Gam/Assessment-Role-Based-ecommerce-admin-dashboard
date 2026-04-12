@@ -1,62 +1,110 @@
-import "dotenv/config";
+// 1. MUST BE FIRST: Load environment variables before any other imports
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
 import express from "express";
 import session from "express-session";
 import AdminJSExpress from "@adminjs/express";
-import bcrypt from "bcryptjs"; 
+import ConnectSessionSequelize from "connect-session-sequelize";
+import bcrypt from "bcryptjs";
 import adminJs from "./admin/adminConfig.js";
 import { sequelize, User } from "./models/index.js";
+import authRouter from "./routes/auth.js";
+import apiRouter from "./routes/api.js";
 
 const app = express();
 
-app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { httpOnly: true, secure: false } // secure: true in production with HTTPS
-  }),
-);
+// Setup Session Store
+const SequelizeStore = ConnectSessionSequelize(session.Store);
+const sessionStore = new SequelizeStore({ 
+  db: sequelize,
+  tableName: 'Sessions' // Explicit table name
+});
 
-// Build the Authenticated Router
+// Build Authenticated Router
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   adminJs,
   {
     authenticate: async (email, password) => {
-      const user = await User.findOne({
-        where: { email: email.toLowerCase() },
-      });
-      if (user) {
-        const matched = await bcrypt.compare(password, user.password);
-        if (matched && user.role === "admin") {
-          return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-          };
+      console.log("Auth Attempt:", email);
+      try {
+        const user = await User.findOne({
+          where: { email: email.toLowerCase().trim() },
+        });
+
+        if (!user || !user.isActive) {
+          console.log("User not found or inactive");
+          return null;
         }
+
+        const valid = await bcrypt.compare(password, user.password);
+        console.log("Password check:", valid ? "VALID" : "INVALID");
+
+        if (!valid || user.role !== "admin") {
+          console.log("Access Denied: Incorrect credentials or not an admin");
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        };
+      } catch (err) {
+        console.error("Auth Error:", err.message);
+        return null;
       }
-      return null;
     },
     cookieName: "adminjs_session",
-    cookiePassword: process.env.COOKIE_PASSWORD || "complexpassword1234567890123456", // must be long
+    cookiePassword: process.env.COOKIE_PASSWORD || "a_very_long_32_character_password_minimum",
   },
   null,
-  { resave: false, saveUninitialized: true },
+  {
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.SESSION_SECRET || "another_very_long_32_char_secret_for_session",
+    cookie: {
+      secure: false, // Must be false for localhost HTTP
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  }
 );
 
+// Mount AdminJS FIRST
 app.use(adminJs.options.rootPath, adminRouter);
 
+// Body parsers (must be after AdminJS so express-formidable isn't blocked)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Mount API routes
+app.use('/api', authRouter);
+app.use('/api', apiRouter);
+
+// Root Redirect
 app.get("/", (req, res) => res.redirect("/admin"));
 
 const start = async () => {
   try {
+    // 1. Connect to DB
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
-    app.listen(3000, () => console.log("🚀 Server: http://localhost:3000/admin"));
+    console.log("PostgreSQL connected");
+
+    // 2. Sync Models & Session Store
+    await sequelize.sync();
+    await sessionStore.sync(); 
+    console.log("Database & Sessions Synced");
+
+    // 3. Start Listening
+    app.listen(3000, () => {
+      console.log(`Admin Panel: http://localhost:3000/admin`);
+    });
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Critical Startup Error:", error);
   }
 };
 

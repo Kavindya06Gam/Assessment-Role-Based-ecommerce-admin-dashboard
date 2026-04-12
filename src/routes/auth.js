@@ -1,3 +1,9 @@
+import express from 'express';
+import { User } from '../models/index.js';
+import { generateToken } from '../middleware/auth.js';
+
+const router = express.Router();
+
 // Login route - handles user authentication
 router.post('/login', async (req, res) => {
 
@@ -41,3 +47,5 @@ router.post('/login', async (req, res) => {
     }
   });
 });
+
+export default router;
