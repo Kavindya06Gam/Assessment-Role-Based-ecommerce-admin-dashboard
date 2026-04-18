@@ -41,8 +41,8 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
         const valid = await bcrypt.compare(password, user.password);
         console.log("Password check:", valid ? "VALID" : "INVALID");
 
-        if (!valid || user.role !== "admin") {
-          console.log("Access Denied: Incorrect credentials or not an admin");
+        if (!valid) {
+          console.log("Access Denied: Invalid password");
           return null;
         }
 
@@ -67,7 +67,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     saveUninitialized: false,
     secret: process.env.SESSION_SECRET || "another_very_long_32_char_secret_for_session",
     cookie: {
-      secure: false, // Must be false for localhost HTTP
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production behind HTTPS
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
@@ -100,8 +100,9 @@ const start = async () => {
     console.log("Database & Sessions Synced");
 
     // 3. Start Listening
-    app.listen(3000, () => {
-      console.log(`Admin Panel: http://localhost:3000/admin`);
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`Admin Panel: http://localhost:${port}/admin`);
     });
   } catch (error) {
     console.error("Critical Startup Error:", error);

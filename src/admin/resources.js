@@ -10,6 +10,16 @@ import {
 // Import RBAC helper from your rbac file
 import { isAdmin } from "./rbac.js";
 
+/** Non-admins only see their own orders; enforced on list/search (filters cannot be bypassed). */
+const scopeOrdersToCurrentUser = async (request, context) => {
+  if (isAdmin(context)) return request;
+  const uid = context.currentAdmin?.id;
+  if (!uid) return request;
+  const q = { ...(request.query || {}) };
+  q["filters.UserId"] = String(uid);
+  return { ...request, query: q };
+};
+
 /**
  * USER RESOURCE
  * Restricted to Admins only. Passwords hidden from UI.
@@ -26,7 +36,9 @@ export const userResource = {
       delete: { isAccessible: isAdmin },
     },
     properties: {
-      password: { isVisible: false },
+      password: {
+        isVisible: { list: false, filter: false, show: false, edit: true },
+      },
     },
   },
 };
@@ -74,8 +86,23 @@ export const orderResource = {
   options: {
     navigation: { icon: "ShoppingCart", name: "Sales" },
     actions: {
-      list: { isAccessible: () => true },
-      show: { isAccessible: () => true },
+      list: {
+        isAccessible: () => true,
+        before: scopeOrdersToCurrentUser,
+      },
+      search: {
+        before: scopeOrdersToCurrentUser,
+      },
+      show: {
+        isAccessible: ({ currentAdmin, record }) => {
+          if (currentAdmin?.role === "admin") return true;
+          const ownerId = record?.params?.UserId;
+          return (
+            ownerId != null &&
+            Number(ownerId) === Number(currentAdmin?.id)
+          );
+        },
+      },
       new: { isAccessible: isAdmin },
       edit: { isAccessible: isAdmin },
       delete: { isAccessible: isAdmin },

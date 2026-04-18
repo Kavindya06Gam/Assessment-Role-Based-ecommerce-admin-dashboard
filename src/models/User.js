@@ -34,10 +34,12 @@ export default (sequelize, DataTypes) => {
     {
       hooks: {
         beforeCreate: async (user) => {
-          user.password = await bcrypt.hash(user.password, 12);
+          if (user.password) {
+            user.password = await bcrypt.hash(user.password, 12);
+          }
         },
         beforeUpdate: async (user) => {
-          if (user.changed("password")) {
+          if (user.changed("password") && user.password) {
             user.password = await bcrypt.hash(user.password, 12);
           }
         },
