@@ -7,7 +7,6 @@ import express from "express";
 import session from "express-session";
 import AdminJSExpress from "@adminjs/express";
 import ConnectSessionSequelize from "connect-session-sequelize";
-import bcrypt from "bcryptjs";
 import adminJs from "./admin/adminConfig.js";
 import { sequelize, User } from "./models/index.js";
 import authRouter from "./routes/auth.js";
@@ -38,7 +37,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
           return null;
         }
 
-        const valid = await bcrypt.compare(password, user.password);
+        const valid = await user.validatePassword(password);
         console.log("Password check:", valid ? "VALID" : "INVALID");
 
         if (!valid) {
